@@ -1,0 +1,30 @@
+name: Fuzz
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'fuzz/**', 'Cargo.toml', '.github/workflows/fuzz.yml']
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: Fuzz (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [parse, split_more]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-fuzz
+      - name: Fuzz for 5 minutes
+        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=300 -max_len=8192

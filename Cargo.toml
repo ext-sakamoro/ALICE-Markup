@@ -1,0 +1,21 @@
+[package]
+name = "alice-markup"
+version = "0.1.0"
+edition = "2021"
+authors = ["Moroya Sakamoto <sakamoro@alicelaw.net>"]
+description = "A small deterministic Markdown subset: headings, paragraphs, lists, quotes, fenced code, emphasis, code spans and links, with the text a reader sees"
+license = "LicenseRef-Proprietary"
+publish = false
+repository = "https://github.com/ext-sakamoro/ALICE-Markup"
+keywords = ["markdown", "parser", "no_std", "deterministic"]
+categories = ["parser-implementations", "text-processing", "no-std"]
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
