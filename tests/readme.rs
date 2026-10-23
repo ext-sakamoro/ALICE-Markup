@@ -8,14 +8,24 @@
 #[global_allocator]
 static BUDGET: alice_markup_test_bounds::Budget = alice_markup_test_bounds::Budget::new(64 << 20);
 
+/// Line by line, as the doctest side is read: a checkout with CRLF line ends
+/// (the Windows default) holds the same lines.
 fn readme_example() -> Vec<String> {
-    let readme = include_str!("../README.md");
-    let start = readme
-        .find("```rust\n")
-        .expect("README has a ```rust block")
-        + "```rust\n".len();
-    let end = start + readme[start..].find("```").expect("the block is closed");
-    readme[start..end].lines().map(str::to_string).collect()
+    let lines: Vec<&str> = include_str!("../README.md").lines().collect();
+    let open = lines
+        .iter()
+        .position(|l| *l == "```rust")
+        .expect("README has a ```rust block");
+    let close = open
+        + 1
+        + lines[open + 1..]
+            .iter()
+            .position(|l| *l == "```")
+            .expect("the block is closed");
+    lines[open + 1..close]
+        .iter()
+        .map(|l| (*l).to_string())
+        .collect()
 }
 
 fn doctest_example() -> Vec<String> {

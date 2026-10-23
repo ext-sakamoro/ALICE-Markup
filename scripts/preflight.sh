@@ -7,7 +7,7 @@
 #
 # usage: scripts/preflight.sh [--quick]   (--quick skips the test / bench suites)
 # generator rev fd42953c41f24e7bf3d7a247f664f39c6330c79d
-# local steps: scripts/preflight.local.sh cb3a2063a42f12e1baefd67fe90dfcadd5a1e690
+# local steps: scripts/preflight.local.sh ad1189ccedb4df2ebced84c43a3a3c63cbec1285
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # --- heavy slot (begin) ---
@@ -297,6 +297,11 @@ if has_toolchain nightly && cargo +nightly fuzz --version >/dev/null 2>&1; then
 else
   echo 'PREFLIGHT-SKIP: fuzz.yml / build every fuzz target: nightly / cargo-fuzz not installed' >&2
 fi
+
+step "eol.yml / line endings (tests, then check)"
+# text files are LF in the index and the working tree (.github/workflows/eol.yml, shared by the ALICE crates)
+python3 scripts/test_check_eol.py
+python3 scripts/check_eol.py
 
 step "public-text.yml / tests of scripts/public_text.sh (no network)"
 python3 scripts/test_public_text.py
