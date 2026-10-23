@@ -6,6 +6,9 @@
 step "public-text.yml / tests of scripts/public_text.sh (no network)"
 python3 scripts/test_public_text.py
 
+step "public-text.yml / tests of scripts/cargo_test_min.sh (no build)"
+python3 scripts/test_cargo_test_min.py
+
 step "public-text.yml / public text (tree at HEAD, then the commits since main)"
 # without origin/main (a new repository) the base is the root commit
 scripts/public_text.sh "$(git merge-base origin/main HEAD 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -1)"

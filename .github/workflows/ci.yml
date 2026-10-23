@@ -34,10 +34,12 @@ jobs:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      # at least 64 tests (unit 6, oracle 52, properties 4, README 1, doctest 1): a run that loses a test file or
+      # executes nothing fails instead of passing
       - name: Test
-        run: cargo test
+        run: bash scripts/cargo_test_min.sh 64
       - name: Test (release)
-        run: cargo test --release
+        run: bash scripts/cargo_test_min.sh 64 --release
 
   clippy:
     name: Clippy

@@ -7,7 +7,7 @@
 #
 # usage: scripts/preflight.sh [--quick]   (--quick skips the test / bench suites)
 # generator rev fd42953c41f24e7bf3d7a247f664f39c6330c79d
-# local steps: scripts/preflight.local.sh 12d7c2e663fb46a516dbf9aaca32743bff08c309
+# local steps: scripts/preflight.local.sh cb3a2063a42f12e1baefd67fe90dfcadd5a1e690
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # --- heavy slot (begin) ---
@@ -255,6 +255,12 @@ has_toolchain() { rustup toolchain list | grep -q "^$1"; }
 #   - fuzz.yml:fuzz:Fuzz for 5 minutes [target=split_more] (runner-only (open-ended or unprovable-bounded fuzz run))
 
 
+step "ci.yml / test: Test"
+( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; bash scripts/cargo_test_min.sh 64 )
+
+step "ci.yml / test: Test (release)"
+( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; bash scripts/cargo_test_min.sh 64 --release )
+
 step "ci.yml / clippy: Clippy (all targets)"
 relint
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo clippy --all-targets -- -D warnings )
@@ -295,6 +301,9 @@ fi
 step "public-text.yml / tests of scripts/public_text.sh (no network)"
 python3 scripts/test_public_text.py
 
+step "public-text.yml / tests of scripts/cargo_test_min.sh (no build)"
+python3 scripts/test_cargo_test_min.py
+
 step "public-text.yml / public text (tree at HEAD, then the commits since main)"
 # without origin/main (a new repository) the base is the root commit
 scripts/public_text.sh "$(git merge-base origin/main HEAD 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -1)"
@@ -302,12 +311,6 @@ scripts/public_text.sh "$(git merge-base origin/main HEAD 2>/dev/null || git rev
 if [[ $quick -eq 1 ]]; then
   echo; echo "preflight --quick OK (test / bench suites skipped)"; exit 0
 fi
-
-step "ci.yml / test: Test"
-( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo test )
-
-step "ci.yml / test: Test (release)"
-( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo test --release )
 
 step "ci.yml / doc: Doc tests"
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo test --doc )

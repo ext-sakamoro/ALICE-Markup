@@ -656,3 +656,11 @@ fn a_list_item_interrupts_a_paragraph() {
         }
     );
 }
+
+/// A closing run must be exactly as long as the opening one: a longer run
+/// does not close it, so the text stays plain.
+#[test]
+fn a_longer_closing_run_does_not_close() {
+    assert_eq!(parse("*a**"), para(vec![t("*a**")]));
+    assert_eq!(parse("_a__"), para(vec![t("_a__")]));
+}
