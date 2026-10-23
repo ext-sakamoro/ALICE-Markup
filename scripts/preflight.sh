@@ -7,7 +7,7 @@
 #
 # usage: scripts/preflight.sh [--quick]   (--quick skips the test / bench suites)
 # generator rev fd42953c41f24e7bf3d7a247f664f39c6330c79d
-# local steps: scripts/preflight.local.sh ad1189ccedb4df2ebced84c43a3a3c63cbec1285
+# local steps: scripts/preflight.local.sh 78f2d5854ca2136e989f331a0aaf507f18d2e190
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # --- heavy slot (begin) ---
@@ -255,6 +255,9 @@ has_toolchain() { rustup toolchain list | grep -q "^$1"; }
 #   - fuzz.yml:fuzz:Fuzz for 5 minutes [target=split_more] (runner-only (open-ended or unprovable-bounded fuzz run))
 
 
+step "ci.yml / test: Tests of scripts/cargo_test_min.sh (no build)"
+( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; python scripts/test_cargo_test_min.py )
+
 step "ci.yml / test: Test"
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; bash scripts/cargo_test_min.sh 64 )
 
@@ -305,9 +308,6 @@ python3 scripts/check_eol.py
 
 step "public-text.yml / tests of scripts/public_text.sh (no network)"
 python3 scripts/test_public_text.py
-
-step "public-text.yml / tests of scripts/cargo_test_min.sh (no build)"
-python3 scripts/test_cargo_test_min.py
 
 step "public-text.yml / public text (tree at HEAD, then the commits since main)"
 # without origin/main (a new repository) the base is the root commit

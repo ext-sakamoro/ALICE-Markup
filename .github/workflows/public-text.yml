@@ -39,8 +39,6 @@ jobs:
           python-version: '3.14'
       - name: Tests of scripts/public_text.sh (no network)
         run: python scripts/test_public_text.py
-      - name: Tests of scripts/cargo_test_min.sh (no build)
-        run: python scripts/test_cargo_test_min.py
       - name: Public text (tree at HEAD, then the pushed commits)
         env:
           BEFORE: ${{ github.event.before }}

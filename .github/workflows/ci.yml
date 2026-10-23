@@ -34,6 +34,9 @@ jobs:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      # the counting wrapper itself, before it counts anything (no build)
+      - name: Tests of scripts/cargo_test_min.sh (no build)
+        run: python scripts/test_cargo_test_min.py
       # at least 64 tests (unit 6, oracle 52, properties 4, README 1, doctest 1): a run that loses a test file or
       # executes nothing fails instead of passing
       - name: Test
