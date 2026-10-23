@@ -3,7 +3,24 @@
 //! targets, the reader text holds no markup a renderer would interpret, and
 //! the time stays linear in the input length.
 
-use alice_markup::{is_safe_href, parse, split_more, Block, Document, Inline};
+/// The memory ceiling (see `alice_markup_test_bounds`): parsing the inputs
+/// these tests use (at most 512 KiB each) never holds more than 64 MiB at
+/// once (the whole suite peaks at 1.6 MiB, in `tests/properties.rs` on one
+/// thread). A parser that keeps allocating without advancing fails here.
+#[global_allocator]
+static BUDGET: alice_markup_test_bounds::Budget = alice_markup_test_bounds::Budget::new(64 << 20);
+
+/// The parser under a deadline (see `alice_markup_test_bounds::within`): every
+/// input here parses in well under a second, so a parser that spins without
+/// advancing fails the test at the deadline.
+fn parse(src: &str) -> Document {
+    let src = src.to_owned();
+    alice_markup_test_bounds::within(std::time::Duration::from_secs(10), move || {
+        alice_markup::parse(&src)
+    })
+}
+
+use alice_markup::{is_safe_href, split_more, Block, Document, Inline};
 
 struct Rng(u64);
 
@@ -210,11 +227,14 @@ fn pathological_inputs_stay_linear() {
     for (k, make) in cases.iter().enumerate() {
         let small = make(2_000);
         let big = make(128_000);
+        // this test bounds its own time (the ratio below), and a debug build
+        // takes longer than the per-call deadline on 128k pieces, so it calls
+        // the parser directly
         let t0 = std::time::Instant::now();
-        let _ = parse(&small);
+        let _ = alice_markup::parse(&small);
         let t_small = t0.elapsed().as_secs_f64().max(1e-4);
         let t1 = std::time::Instant::now();
-        let doc = parse(&big);
+        let doc = alice_markup::parse(&big);
         let t_big = t1.elapsed().as_secs_f64();
         assert!(!doc.blocks.is_empty());
         // linear would be 64x; quadratic 4096x

@@ -253,3 +253,79 @@ fn parse(src: &str, links: bool, depth: usize) -> Vec<Inline> {
     }
     out.finish()
 }
+
+#[cfg(test)]
+mod tests {
+    extern crate std;
+
+    use super::{Inline, MAX_DEPTH};
+    use alloc::string::ToString;
+    use alloc::vec;
+    use alloc::vec::Vec;
+
+    fn t(s: &str) -> Inline {
+        Inline::Text(s.to_string())
+    }
+
+    /// The recursion under a deadline (see `alice_markup_test_bounds::within`).
+    fn parse(src: &str, links: bool, depth: usize) -> Vec<Inline> {
+        let src = src.to_string();
+        alice_markup_test_bounds::within(std::time::Duration::from_secs(10), move || {
+            super::parse(&src, links, depth)
+        })
+    }
+
+    fn link(label: Vec<Inline>) -> Inline {
+        Inline::Link {
+            label,
+            href: "/x".to_string(),
+        }
+    }
+
+    // The emphasis kinds (`*`, `_`, `**`, `__`) and labels without `[` keep
+    // public inputs far below MAX_DEPTH, so the depth limit is pinned here, at
+    // the recursion itself, one level each side of it.
+
+    #[test]
+    fn emphasis_opens_below_max_depth_only() {
+        let depth = MAX_DEPTH - 1;
+        assert_eq!(parse("*a*", true, depth), [Inline::Emphasis(vec![t("a")])]);
+        assert_eq!(parse("*a*", true, MAX_DEPTH), [t("*a*")]);
+        assert_eq!(parse("*a*", true, MAX_DEPTH + 1), [t("*a*")]);
+    }
+
+    #[test]
+    fn the_content_of_emphasis_is_one_level_deeper() {
+        assert_eq!(
+            parse("*_a_*", true, MAX_DEPTH - 1),
+            [Inline::Emphasis(vec![t("_a_")])]
+        );
+        assert_eq!(
+            parse("*_a_*", true, MAX_DEPTH - 2),
+            [Inline::Emphasis(vec![Inline::Emphasis(vec![t("a")])])]
+        );
+    }
+
+    #[test]
+    fn links_open_below_max_depth_only() {
+        assert_eq!(parse("[a](/x)", true, MAX_DEPTH - 1), [link(vec![t("a")])]);
+        assert_eq!(parse("[a](/x)", true, MAX_DEPTH), [t("[a](/x)")]);
+        assert_eq!(parse("![a](/x)", true, MAX_DEPTH), [t("![a](/x)")]);
+        assert_eq!(parse("![a](/x)", true, MAX_DEPTH - 1), [t("a")]);
+    }
+
+    #[test]
+    fn a_label_holds_no_link_and_is_one_level_deeper() {
+        // inside a label (`links` false) brackets are text at any depth
+        assert_eq!(parse("[a](/x)", false, 0), [t("[a](/x)")]);
+        assert_eq!(parse("![a](/x)", false, 0), [t("![a](/x)")]);
+        assert_eq!(
+            parse("[*a*](/x)", true, MAX_DEPTH - 1),
+            [link(vec![t("*a*")])]
+        );
+        assert_eq!(
+            parse("[*a*](/x)", true, MAX_DEPTH - 2),
+            [link(vec![Inline::Emphasis(vec![t("a")])])]
+        );
+    }
+}

@@ -1,7 +1,24 @@
 //! The subset, case by case: each test writes the expected document by hand
 //! from the rules in the crate documentation (never from the parser's output).
 
-use alice_markup::{is_safe_href, parse, split_more, Block, Document, Inline, MoreError};
+/// The memory ceiling (see `alice_markup_test_bounds`): parsing the inputs
+/// these tests use (at most 512 KiB each) never holds more than 64 MiB at
+/// once (the whole suite peaks at 1.6 MiB, in `tests/properties.rs` on one
+/// thread). A parser that keeps allocating without advancing fails here.
+#[global_allocator]
+static BUDGET: alice_markup_test_bounds::Budget = alice_markup_test_bounds::Budget::new(64 << 20);
+
+/// The parser under a deadline (see `alice_markup_test_bounds::within`): every
+/// input here parses in well under a second, so a parser that spins without
+/// advancing fails the test at the deadline.
+fn parse(src: &str) -> Document {
+    let src = src.to_owned();
+    alice_markup_test_bounds::within(std::time::Duration::from_secs(10), move || {
+        alice_markup::parse(&src)
+    })
+}
+
+use alice_markup::{is_safe_href, split_more, Block, Document, Inline, MoreError};
 
 fn t(s: &str) -> Inline {
     Inline::Text(s.to_string())
@@ -42,6 +59,10 @@ fn seven_hashes_or_no_space_is_a_paragraph() {
     assert_eq!(parse("#hashtag"), para(vec![t("#hashtag")]));
 }
 
+/// The closing run is looked for at the end of the trimmed heading text; with
+/// no closing hashes the text before the run is the whole trimmed text, which
+/// ends in no space, so whether a run of zero hashes is "dropped" (`closing >
+/// 0` or `>= 0` in `heading`) cannot change the result.
 #[test]
 fn heading_closing_hashes_are_dropped() {
     assert_eq!(
@@ -519,4 +540,119 @@ fn href_policy() {
     ] {
         assert!(!is_safe_href(bad), "{bad}");
     }
+}
+
+// ---- limits and edges -----------------------------------------------------
+
+/// A closing backtick run, bracket or delimiter is looked for within 4096
+/// bytes after the opener (the crate's linear-time rule); one byte further it
+/// is not found and the opener is plain text. The text starts with one byte
+/// before the opener so the limit is measured from an opener that is not at 0.
+#[test]
+fn closers_are_found_within_4096_bytes_of_the_opener() {
+    let inside = "a".repeat(4095);
+    let outside = "a".repeat(4096);
+
+    assert_eq!(
+        parse(&format!("x`{inside}`")),
+        para(vec![t("x"), Inline::Code(inside.clone())])
+    );
+    let text = format!("x`{outside}`");
+    assert_eq!(parse(&text), para(vec![t(&text)]));
+
+    assert_eq!(
+        parse(&format!("x[{inside}](/p)")),
+        para(vec![
+            t("x"),
+            Inline::Link {
+                label: vec![t(&inside)],
+                href: "/p".into()
+            }
+        ])
+    );
+    let text = format!("x[{outside}](/p)");
+    assert_eq!(parse(&text), para(vec![t(&text)]));
+
+    assert_eq!(
+        parse(&format!("x*{inside}*")),
+        para(vec![t("x"), Inline::Emphasis(vec![t(&inside)])])
+    );
+    let text = format!("x*{outside}*");
+    assert_eq!(parse(&text), para(vec![t(&text)]));
+}
+
+#[test]
+fn emphasis_after_other_text() {
+    assert_eq!(
+        parse("abcde**f**"),
+        para(vec![t("abcde"), Inline::Strong(vec![t("f")])])
+    );
+}
+
+#[test]
+fn an_escaped_closer_does_not_close() {
+    assert_eq!(
+        parse("[abcd\\]e](/x)"),
+        para(vec![Inline::Link {
+            label: vec![t("abcd]e")],
+            href: "/x".into()
+        }])
+    );
+    assert_eq!(
+        parse("*abcd\\*e*"),
+        para(vec![Inline::Emphasis(vec![t("abcd*e")])])
+    );
+}
+
+#[test]
+fn a_delimiter_inside_a_code_span_does_not_close_emphasis() {
+    assert_eq!(
+        parse("*a `b*c` d*"),
+        para(vec![Inline::Emphasis(vec![
+            t("a "),
+            Inline::Code("b*c".into()),
+            t(" d")
+        ])])
+    );
+}
+
+/// `_` closes only before a character that is not a letter or digit; `*`
+/// closes only after one that is not whitespace, and opens only before one.
+///
+/// The closer search starts right after the opening run, and that run is as
+/// long as the delimiter repeats, so the first byte searched is never the
+/// delimiter: "a closer starts after the opening run" (`pos > at + run` in
+/// `emphasis_close`) and "at or after it" (`>=`) cannot differ on any input.
+#[test]
+fn closers_and_openers_respect_their_neighbours() {
+    assert_eq!(parse("_ab_c"), para(vec![t("_ab_c")]));
+    assert_eq!(parse("*a *"), para(vec![t("*a *")]));
+    assert_eq!(parse("x * a*"), para(vec![t("x * a*")]));
+}
+
+#[test]
+fn a_code_span_of_spaces_keeps_them() {
+    assert_eq!(parse("`  `"), para(vec![Inline::Code("  ".into())]));
+}
+
+#[test]
+fn a_bang_without_a_bracket_is_text() {
+    assert_eq!(parse("a! b](/x)"), para(vec![t("a! b](/x)")]));
+}
+
+#[test]
+fn a_list_item_interrupts_a_paragraph() {
+    assert_eq!(
+        parse("a\n- b"),
+        Document {
+            blocks: vec![
+                Block::Paragraph(vec![t("a")]),
+                Block::List {
+                    ordered: false,
+                    start: 0,
+                    items: vec![vec![t("b")]]
+                }
+            ]
+        }
+    );
 }

@@ -5,3 +5,10 @@ version = 4
 [[package]]
 name = "alice-markup"
 version = "0.1.0"
+dependencies = [
+ "alice-markup-test-bounds",
+]
+
+[[package]]
+name = "alice-markup-test-bounds"
+version = "0.0.0"

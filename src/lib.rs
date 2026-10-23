@@ -35,6 +35,13 @@
 
 extern crate alloc;
 
+/// The unit tests run under the same memory ceiling as the integration tests
+/// (see the dev-dependency `alice_markup_test_bounds`).
+#[cfg(test)]
+#[global_allocator]
+static TEST_BUDGET: alice_markup_test_bounds::Budget =
+    alice_markup_test_bounds::Budget::new(64 << 20);
+
 mod block;
 mod inline;
 mod more;

@@ -3,3 +3,5 @@
 /fuzz/corpus
 /fuzz/artifacts
 __pycache__/
+/tests/bounds/target
+/tests/bounds/Cargo.lock

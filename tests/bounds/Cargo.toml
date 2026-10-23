@@ -1,0 +1,16 @@
+[package]
+name = "alice-markup-test-bounds"
+version = "0.0.0"
+edition = "2021"
+description = "Test-only bounds for alice-markup: a ceiling on live bytes and a deadline per call"
+license = "LicenseRef-Proprietary"
+publish = false
+
+[dependencies]
+
+[lints.rust]
+missing_docs = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }

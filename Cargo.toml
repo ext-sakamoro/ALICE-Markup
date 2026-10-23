@@ -12,6 +12,10 @@ categories = ["parser-implementations", "text-processing", "no-std"]
 
 [dependencies]
 
+[dev-dependencies]
+# test-only bounds: a ceiling on live bytes and a deadline per parse (never published)
+alice-markup-test-bounds = { path = "tests/bounds" }
+
 [lints.rust]
 unsafe_code = "forbid"
 missing_docs = "deny"
