@@ -256,7 +256,11 @@ has_toolchain() { rustup toolchain list | grep -q "^$1"; }
 
 
 step "ci.yml / test: Tests of scripts/cargo_test_min.sh (no build)"
-( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; python scripts/test_cargo_test_min.py )
+(
+  export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"
+  PY=$(command -v python3 || command -v python)
+  "$PY" scripts/test_cargo_test_min.py
+)
 
 step "ci.yml / test: Test"
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; bash scripts/cargo_test_min.sh 64 )
