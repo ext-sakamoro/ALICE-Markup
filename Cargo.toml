@@ -2,7 +2,7 @@
 name = "alice-markup"
 version = "0.1.0"
 edition = "2021"
-authors = ["Moroya Sakamoto <sakamoro@alicelaw.net>"]
+authors = ["Moroya Sakamoto"]
 description = "A small deterministic Markdown subset: headings, paragraphs, lists, quotes, fenced code, emphasis, code spans and links, with the text a reader sees"
 license = "LicenseRef-Proprietary"
 publish = false
