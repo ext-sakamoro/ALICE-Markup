@@ -53,4 +53,6 @@ Everything else (HTML, tables, setext headings, reference links, hard breaks) is
 
 ## License
 
-Proprietary. Copyright (c) 2026 Moroya Sakamoto, all rights reserved. The source is published for reading only; no license to use, copy, modify or distribute it is granted (see `LICENSE`).
+`LicenseRef-Proprietary`. The text is [LICENSE-Proprietary](LICENSE-Proprietary).
+
+Enquiries: https://extoria.co.jp/
