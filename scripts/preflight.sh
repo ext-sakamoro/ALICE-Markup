@@ -6,7 +6,7 @@
 # Run `--quick` before every push.
 #
 # usage: scripts/preflight.sh [--quick]   (--quick skips the test / bench suites)
-# generator rev fd42953c41f24e7bf3d7a247f664f39c6330c79d
+# generator rev ba5ce5ffe222b20ef2056d598c76fe6342cef927
 # local steps: scripts/preflight.local.sh 78f2d5854ca2136e989f331a0aaf507f18d2e190
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -248,11 +248,13 @@ step() { printf '\n\033[1;34m== %s\033[0m\n' "$*"; }
 # touching the crate roots invalidates only this repo's fingerprints.
 relint() { git ls-files | grep -E '(^|/)src/(lib|main)\.rs$' | xargs -r touch; }
 need() { command -v "$1" >/dev/null 2>&1 || { echo "missing tool: $1 ($2)" >&2; exit 1; }; }
-has_toolchain() { rustup toolchain list | grep -q "^$1"; }
+has_toolchain() { grep -q "^$1" <<<"$(rustup toolchain list)"; }
 
 # Steps CI runs that this file cannot reproduce locally (they can only fail remotely):
+#   - fuzz.yml:changes:decide (reads AFTER, BEFORE, CREATED, EVENT, FORCED, PR_BASE, PR_HEAD, a value only the runner has)
 #   - fuzz.yml:fuzz:Fuzz for 5 minutes [target=parse] (runner-only (open-ended or unprovable-bounded fuzz run))
 #   - fuzz.yml:fuzz:Fuzz for 5 minutes [target=split_more] (runner-only (open-ended or unprovable-bounded fuzz run))
+#   - fuzz.yml:gate:gate (reads NEEDS, a value only the runner has)
 
 
 step "ci.yml / test: Tests of scripts/cargo_test_min.sh (no build)"
@@ -273,16 +275,16 @@ relint
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo clippy --all-targets -- -D warnings )
 
 step "ci.yml / targets: Build (thumbv7em-none-eabihf)"
-rustup target list --installed | grep -q '^thumbv7em-none-eabihf$' || rustup target add thumbv7em-none-eabihf
+grep -q '^thumbv7em-none-eabihf$' <<<"$(rustup target list --installed)" || rustup target add thumbv7em-none-eabihf
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo build --lib --target thumbv7em-none-eabihf )
 
 step "ci.yml / targets: Clippy (thumbv7em-none-eabihf)"
 relint
-rustup target list --installed | grep -q '^thumbv7em-none-eabihf$' || rustup target add thumbv7em-none-eabihf
+grep -q '^thumbv7em-none-eabihf$' <<<"$(rustup target list --installed)" || rustup target add thumbv7em-none-eabihf
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo clippy --lib --target thumbv7em-none-eabihf -- -D warnings )
 
 step "ci.yml / targets: Build (wasm32-unknown-unknown)"
-rustup target list --installed | grep -q '^wasm32-unknown-unknown$' || rustup target add wasm32-unknown-unknown
+grep -q '^wasm32-unknown-unknown$' <<<"$(rustup target list --installed)" || rustup target add wasm32-unknown-unknown
 ( export CARGO_TERM_COLOR="always" RUSTFLAGS="-Dwarnings"; cargo build --lib --target wasm32-unknown-unknown )
 
 step "ci.yml / fmt: Check formatting"
