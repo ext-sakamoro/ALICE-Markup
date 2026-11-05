@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- CI: 共有の `test_check_eol`、`eol.yml`、`public-text.yml` を新しい版にした
 - CI: the shared public text workflow and its tests (`.github/workflows/public-text.yml`, `scripts/test_public_text.py`) are now byte-identical with the other ALICE crates' copies. The tests of `scripts/cargo_test_min.sh` move from the shared workflow to the `test` job of `ci.yml`, and `scripts/preflight.sh` is regenerated to match; the public text tests gain the cases the shared copy has (a planted finding, the checker's revision and checksum, settings approved by the pin)
 - Tests of `scripts/cargo_test_min.sh` run on Windows too, now that they are in the `test` job of every OS: they start Git's bash (the `bash` on PATH there can be the WSL launcher), join PATH with the platform separator, and write the fake `cargo` with LF line endings
 
