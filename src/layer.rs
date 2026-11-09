@@ -253,16 +253,19 @@ fn push_inline_block(
 ) {
     let chars = flatten(inlines, links);
     if !chars.is_empty() {
-        push_chars(out, role, &chars, links, tag, inner_open, inner_close);
+        push_chars(out, role, &chars, links, tag, "", inner_open, inner_close);
     }
 }
 
+/// `attrs` follow the id in the opening tag (empty, or starting with a space)
+#[allow(clippy::too_many_arguments)]
 fn push_chars(
     out: &mut TextLayer,
     role: Role,
     chars: &[Ch],
     links: &[String],
     tag: &str,
+    attrs: &str,
     inner_open: &str,
     inner_close: &str,
 ) {
@@ -273,7 +276,16 @@ fn push_chars(
     let mut open_link: Option<(usize, u32)> = None;
     push_all(
         &mut out.html,
-        &["<", tag, " id=\"b", &id.to_string(), "\">", inner_open],
+        &[
+            "<",
+            tag,
+            " id=\"b",
+            &id.to_string(),
+            "\"",
+            attrs,
+            ">",
+            inner_open,
+        ],
     );
     let mut i = 0;
     while i < chars.len() {
@@ -379,21 +391,29 @@ fn push_list(
         }
         if !opened {
             if ordered {
+                // the list starts at the first item shown, so the HTML numbers what the blocks number
                 push_all(
                     &mut out.html,
-                    &["<ol start=\"", &start.to_string(), "\">\n"],
+                    &["<ol start=\"", &number.to_string(), "\">\n"],
                 );
             } else {
                 out.html.push_str("<ul>\n");
             }
             opened = true;
         }
+        // each item of a numbered list carries its own number
+        let value = if ordered {
+            [" value=\"", &number.to_string(), "\""].concat()
+        } else {
+            String::new()
+        };
         push_chars(
             out,
             Role::ListItem { ordered, number },
             &chars,
             links,
             "li",
+            &value,
             "",
             "",
         );

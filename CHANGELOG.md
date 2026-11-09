@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- `text_layer` / `TextLayer` / `BlockRun` / `Role` / `InlineStyle` / `StyleRange` / `LinkSpan`: 1 つの文書から、支援技術と検索向けの HTML の断片と、block ごとに組版へ渡す文字 (空白は `text_lines` と同じく 1 つに、code block は書いたまま)・書式の範囲 (隙間・重なりなし)・link の範囲を出す block の要素は id `b<n>` を持ち、HTML と block の文字は同じ 2 つの run の間の空白は両方に共通の書式を取り、両側が同じ link の時だけその link に入る `& < > " '` を escape する 文字が空の block は出さない 試験 `tests/text_layer.rs` (手で書いた期待値 9 本、`text_lines` との突合と範囲の性質 3 本)
+- `text_layer` / `TextLayer` / `BlockRun` / `Role` / `InlineStyle` / `StyleRange` / `LinkSpan`: 1 つの文書から、支援技術と検索向けの HTML の断片と、block ごとに組版へ渡す文字 (空白は `text_lines` と同じく 1 つに、code block は書いたまま)・書式の範囲 (隙間・重なりなし)・link の範囲を出す block の要素は id `b<n>` を持ち、HTML と block の文字は同じ 2 つの run の間の空白は両方に共通の書式を取り、両側が同じ link の時だけその link に入る `& < > " '` を escape する 文字が空の block は出さない 番号付きの list は表示する最初の項目の番号から始め (`ol start`)、各 `li` が自分の番号 (`value`) を持つので、先頭の項目が空で落ちても HTML の番号と `Role::ListItem::number` が揃う 試験 `tests/text_layer.rs` (手で書いた期待値 9 本、`text_lines` との突合と範囲の性質 3 本)
 - `parse`: headings, paragraphs, lists, quotes and fenced code; emphasis, strong emphasis, code spans, links and backslash escapes
 - `Document::text_lines`: the text a reader sees, one line per block line
 - `is_safe_href`: the link targets that become links (`http(s)://`, `mailto:`, `/path`, `#fragment`)
