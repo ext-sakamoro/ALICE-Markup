@@ -44,10 +44,12 @@ static TEST_BUDGET: alice_markup_test_bounds::Budget =
 
 mod block;
 mod inline;
+mod layer;
 mod more;
 mod text;
 
 pub use block::parse;
+pub use layer::{text_layer, BlockRun, InlineStyle, LinkSpan, Role, StyleRange, TextLayer};
 pub use more::{split_more, MoreError, MORE_MARKER};
 
 use alloc::string::String;

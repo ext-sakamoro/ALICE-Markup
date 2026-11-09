@@ -44,11 +44,13 @@ Everything else (HTML, tables, setext headings, reference links, hard breaks) is
 - `Document::text_lines` is what a reader sees, one line per heading, paragraph, quote, list item and code line, with whitespace collapsed.
   A renderer that shows these strings and a check that looks for a text in a built site compare the same thing.
 - `split_more` finds exactly one `<!-- more -->` line, or returns an error.
+- `text_layer` gives one document as an HTML fragment (for screen readers and search) and, per block, the plain text a page lays out and draws, with its style ranges and link ranges; the HTML and the blocks say the same text, and each block element carries the id `b<n>` of its block.
 
 ## Tests
 
 - `tests/oracle.rs`: each rule as hand-written expected documents.
 - `tests/properties.rs`: generated inputs with a fixed seed. They check determinism, link targets, reader lines and linear time.
+- `tests/text_layer.rs`: the text layer as hand-written expected HTML and blocks, and the blocks against `text_lines`.
 - `fuzz/`: `parse` and `split_more` under cargo-fuzz.
 
 ## License
