@@ -153,7 +153,7 @@ fn an_ordered_list_keeps_its_numbers_and_each_item_is_a_block() {
     );
     assert_eq!(
         l.html,
-        "<ol start=\"3\">\n<li id=\"b0\">a</li>\n<li id=\"b1\"><code>b</code></li>\n</ol>\n"
+        "<ol start=\"3\">\n<li id=\"b0\" value=\"3\">a</li>\n<li id=\"b1\" value=\"4\"><code>b</code></li>\n</ol>\n"
     );
 }
 
@@ -329,4 +329,27 @@ fn ids_are_dense_in_reading_order() {
         }
         assert!(!l.html.contains(&format!(" id=\"b{}\"", l.blocks.len())));
     }
+}
+
+/// The HTML numbers the items it shows the same as `Role::ListItem::number`: when the first items
+/// of an ordered list have no visible text (and are left out), the list starts at the number of
+/// the first item shown, and each item carries its own number
+#[test]
+fn an_ordered_list_whose_first_items_are_empty_numbers_the_shown_items_alike() {
+    let l = layer("3. ` `\n4. a\n5. b\n");
+    let numbers: Vec<Role> = l.blocks.iter().map(|b| b.role.clone()).collect();
+    assert_eq!(
+        numbers,
+        vec![
+            Role::ListItem {
+                ordered: true,
+                number: 4
+            },
+            Role::ListItem {
+                ordered: true,
+                number: 5
+            }
+        ]
+    );
+    assert_eq!(l.html, "<ol start=\"4\">\n<li id=\"b0\" value=\"4\">a</li>\n<li id=\"b1\" value=\"5\">b</li>\n</ol>\n");
 }
